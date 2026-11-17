@@ -1,0 +1,25 @@
+{
+  "extends": "./.nuxt/tsconfig.json",
+  "compilerOptions": {
+    "strict": true
+  },
+  "include": [
+    "./app.vue",
+    "./error.vue",
+    "./nuxt.config.ts",
+    "./tailwind.config.ts",
+    "./components/**/*",
+    "./composables/**/*",
+    "./layouts/**/*",
+    "./pages/**/*",
+    "./server/**/*",
+    "./types/**/*",
+    "./.nuxt/nuxt.d.ts",
+    "./.nuxt/**/*.d.ts"
+  ],
+  "exclude": [
+    "./.nuxt/dist",
+    "./.output",
+    "./node_modules"
+  ]
+}
