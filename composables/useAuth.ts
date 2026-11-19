@@ -1,18 +1,27 @@
 import type { AuthUser, FoodEntry } from '~/types'
 import { useAppState } from '~/composables/useAppState'
+import { clearLocalUserData } from '~/utils/userState'
 
 type FetchLike = typeof $fetch
 
 export function useAuth() {
-  const { state } = useAppState()
+  const { state, resetAll } = useAppState()
   const user = useState<AuthUser | null>('auth:user', () => null)
   const initialized = useState<boolean>('auth:initialized', () => false)
   const loading = useState<boolean>('auth:loading', () => false)
+  const activeUserId = useState<number | null>('auth:activeUserId', () => null)
 
   const isAuthenticated = computed(() => Boolean(user.value))
 
   function request(): FetchLike {
     return import.meta.server ? (useRequestFetch() as FetchLike) : $fetch
+  }
+
+  function switchAccount(next: AuthUser | null): void {
+    if (activeUserId.value === (next?.id ?? null)) return
+    clearLocalUserData(activeUserId.value)
+    resetAll()
+    activeUserId.value = next?.id ?? null
   }
 
   async function loadDiaryEntries(fetcher?: FetchLike): Promise<void> {
@@ -28,8 +37,10 @@ export function useAuth() {
     try {
       try {
         const response = await fetcher<{ user: AuthUser }>('/api/auth/me')
+        switchAccount(response.user)
         user.value = response.user
       } catch {
+        switchAccount(null)
         user.value = null
       }
 
@@ -57,6 +68,7 @@ export function useAuth() {
         method: 'POST',
         body: { email, password },
       })
+      switchAccount(response.user)
       user.value = response.user
       initialized.value = true
       try {
@@ -77,6 +89,7 @@ export function useAuth() {
         method: 'POST',
         body: { email, password },
       })
+      switchAccount(response.user)
       user.value = response.user
       initialized.value = true
       try {
@@ -92,12 +105,15 @@ export function useAuth() {
 
   async function logout(): Promise<void> {
     loading.value = true
+    const previousUserId = activeUserId.value
     try {
       await $fetch('/api/auth/logout', { method: 'POST' })
     } finally {
+      clearLocalUserData(previousUserId)
       user.value = null
+      activeUserId.value = null
       initialized.value = true
-      state.value.foods = []
+      resetAll()
       loading.value = false
     }
   }

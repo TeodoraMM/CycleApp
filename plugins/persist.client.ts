@@ -1,9 +1,9 @@
 import { createDefaultState, useAppState } from '~/composables/useAppState'
+import { useAuth } from '~/composables/useAuth'
 import type { AppState, CycleEntry, DailyLog, FoodEntry, UserProfile } from '~/types'
 import { normalizeGoal } from '~/data/goals'
 import { normalizeCycleEntries, normalizeCycleLength, normalizePeriodLength } from '~/utils/cycle'
-
-const STORAGE_KEY = 'cyclefuel:v1'
+import { LOCAL_STATE_KEY } from '~/utils/userState'
 
 interface StoredState {
   version?: number
@@ -62,24 +62,18 @@ function mergeState(raw: string): AppState | null {
 
 export default defineNuxtPlugin(() => {
   const { state } = useAppState()
+  const { user } = useAuth()
 
   onNuxtReady(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const restored = mergeState(raw)
-        if (restored) state.value = { ...restored, foods: state.value.foods }
-      }
-    } catch {
-      // Storage can be unavailable in private browsing; the app still works in memory.
-    }
+    window.localStorage.removeItem(LOCAL_STATE_KEY)
 
     watch(
-      state,
-      (value) => {
+      [state, user],
+      ([value, authUser]) => {
+        if (authUser) return
         try {
           const snapshot: AppState = { ...value, foods: [] }
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
+          window.localStorage.setItem(LOCAL_STATE_KEY, JSON.stringify(snapshot))
         } catch {
           // Ignore quota or privacy errors.
         }

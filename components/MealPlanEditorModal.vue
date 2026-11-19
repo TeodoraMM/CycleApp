@@ -3,6 +3,7 @@ import type { DietPreference, MealPlanMeal, MealType } from '~/types'
 import { MEAL_INGREDIENTS, MEAL_SLOT_LABELS } from '~/data/mealPlans'
 import { useAuth } from '~/composables/useAuth'
 import { isDateKey, todayKey } from '~/utils/date'
+import { useModalAccessibility } from '~/composables/useModalAccessibility'
 
 interface DraftIngredient {
   name: string
@@ -97,18 +98,11 @@ function close(): void {
   emit('close')
 }
 
-function onKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape' && props.open) close()
-}
+useModalAccessibility(computed(() => props.open), close, { allowEscape: () => !saving.value })
 
 watch(
   () => props.open,
   (open) => {
-    if (import.meta.client) {
-      document.body.style.overflow = open ? 'hidden' : ''
-      if (open) window.addEventListener('keydown', onKeydown)
-      else window.removeEventListener('keydown', onKeydown)
-    }
     if (open) reset()
   },
 )
@@ -119,12 +113,6 @@ watch(
     if (props.open) reset()
   },
 )
-
-onBeforeUnmount(() => {
-  if (!import.meta.client) return
-  document.body.style.overflow = ''
-  window.removeEventListener('keydown', onKeydown)
-})
 
 async function addToDiary(): Promise<void> {
   if (!canSave.value || !props.meal || !isAuthenticated.value) return
@@ -158,22 +146,18 @@ async function addToDiary(): Promise<void> {
 <template>
   <Teleport to="body">
     <Transition name="fade">
-      <div
-        v-if="open && meal"
-        class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-plum-700/35 p-4 backdrop-blur-sm"
-        @click.self="close"
-      >
+      <div v-if="open && meal" class="modal-backdrop" @click.self="close">
         <section
-          class="animate-fade-up flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-[32px] border border-white/70 bg-cream shadow-lift"
+          class="animate-fade-up modal-panel bg-cream"
           role="dialog"
           aria-modal="true"
-          :aria-label="`Customize ${meal?.title ?? mealLabel}`"
+          aria-labelledby="meal-editor-title"
         >
-          <div class="px-5 pb-4 pt-5">
+          <div class="modal-header flex-col items-stretch justify-start">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
                 <p class="eyebrow">{{ mealLabel }}</p>
-                <h2 class="mt-1 font-display text-xl font-semibold leading-tight text-ink">
+                <h2 id="meal-editor-title" class="mt-1 font-display text-xl font-semibold leading-tight text-ink">
                   {{ meal.title }}
                 </h2>
                 <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">
@@ -214,7 +198,7 @@ async function addToDiary(): Promise<void> {
             </p>
           </div>
 
-          <div class="flex-1 space-y-2 overflow-y-auto px-5 pb-4">
+          <div class="modal-body space-y-2">
             <p v-if="!drafts.length" class="py-8 text-center text-sm text-ink-soft">
               No ingredient suggestions are available for this meal.
             </p>
@@ -224,8 +208,8 @@ async function addToDiary(): Promise<void> {
               class="rounded-2xl border border-white/80 bg-white/75 px-3.5 py-3"
             >
               <div class="flex items-center justify-between gap-3">
-                <p class="truncate text-sm font-semibold text-ink">{{ item.name }}</p>
-                <p class="shrink-0 text-[10px] text-ink-faint">{{ item.baseGrams }} g suggested</p>
+                <p class="min-w-0 truncate text-sm font-semibold text-ink">{{ item.name }}</p>
+                <p class="shrink-0 text-[11px] text-ink-soft">{{ item.baseGrams }} g suggested</p>
               </div>
               <div class="mt-2 flex items-center gap-2">
                 <input
@@ -235,13 +219,13 @@ async function addToDiary(): Promise<void> {
                   max="2000"
                   step="5"
                   inputmode="decimal"
-                  class="input"
+                  class="input min-w-0 flex-1"
                   :aria-label="`${item.name} grams`"
                 />
                 <span class="shrink-0 text-xs font-semibold text-ink-soft">g</span>
                 <button
                   type="button"
-                  class="btn-soft shrink-0 px-2.5 py-2 text-[10px]"
+                  class="btn-soft min-h-11 shrink-0 px-2.5 py-2 text-[11px] sm:min-h-0"
                   :disabled="saving"
                   @click="resetItem(index)"
                 >
@@ -254,29 +238,30 @@ async function addToDiary(): Promise<void> {
             </div>
           </div>
 
-          <div class="border-t border-plum-100 bg-white/70 px-5 py-4">
+          <div class="modal-footer sm:flex-col sm:items-stretch">
             <p class="eyebrow">Meal total</p>
-            <div class="mt-2 grid grid-cols-4 gap-1.5">
+            <div class="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
               <div class="rounded-2xl bg-cream-100 px-2 py-2 text-center">
-                <p class="text-[9px] font-semibold uppercase tracking-wider text-ink-faint">Kcal</p>
+                  <p class="text-[11px] font-semibold uppercase tracking-wider text-ink-soft">Kcal</p>
+
                 <p class="mt-0.5 font-display text-base font-semibold text-ink">
                   {{ Math.round(preview.calories) }}
                 </p>
               </div>
               <div class="rounded-2xl bg-plum-50 px-2 py-2 text-center">
-                <p class="text-[9px] font-semibold uppercase tracking-wider text-plum-500">Protein</p>
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-plum-500">Protein</p>
                 <p class="mt-0.5 font-display text-base font-semibold text-ink">
                   {{ Math.round(preview.protein) }} g
                 </p>
               </div>
               <div class="rounded-2xl bg-blush-50 px-2 py-2 text-center">
-                <p class="text-[9px] font-semibold uppercase tracking-wider text-blush-500">Carbs</p>
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-blush-700">Carbs</p>
                 <p class="mt-0.5 font-display text-base font-semibold text-ink">
                   {{ Math.round(preview.carbs) }} g
                 </p>
               </div>
               <div class="rounded-2xl bg-lavender-50 px-2 py-2 text-center">
-                <p class="text-[9px] font-semibold uppercase tracking-wider text-lavender-500">Fat</p>
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-lavender-700">Fat</p>
                 <p class="mt-0.5 font-display text-base font-semibold text-ink">
                   {{ Math.round(preview.fat) }} g
                 </p>

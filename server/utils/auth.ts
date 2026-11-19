@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { createError, deleteCookie, getCookie, setCookie, type H3Event } from 'h3'
 import type { AuthUser } from '~/types'
-import { findUserById, type UserRow } from './db'
+import { findUserById, touchUserActivity, type UserRow } from './db'
 
 const AUTH_COOKIE = 'cyclefuel_auth'
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7
@@ -33,6 +33,7 @@ export function toAuthUser(row: UserRow): AuthUser {
     id: row.id,
     email: row.email,
     createdAt: row.created_at,
+    isAdmin: Boolean(row.is_admin),
   }
 }
 
@@ -65,7 +66,9 @@ export function getAuthUser(event: H3Event): AuthUser | null {
     if (typeof payload === 'string' || !payload.sub) return null
 
     const row = findUserById(Number(payload.sub))
-    return row ? toAuthUser(row) : null
+    if (!row || row.account_status === 'disabled') return null
+    touchUserActivity(row.id)
+    return toAuthUser(row)
   } catch {
     return null
   }
@@ -81,5 +84,13 @@ export function requireAuth(event: H3Event): AuthUser {
   }
 
   event.context.user = user
+  return user
+}
+
+export function requireAdmin(event: H3Event): AuthUser {
+  const user = requireAuth(event)
+  if (!user.isAdmin) {
+    throw createError({ statusCode: 403, statusMessage: 'Administrator access required' })
+  }
   return user
 }

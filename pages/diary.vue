@@ -19,7 +19,7 @@ const diaryError = ref('')
 const removingId = ref<string | null>(null)
 
 const meals: Array<{ key: MealType; label: string; icon: string; bubble: string }> = [
-  { key: 'breakfast', label: 'Breakfast', icon: 'sun', bubble: 'bg-peach-100 text-peach-500' },
+  { key: 'breakfast', label: 'Breakfast', icon: 'sun', bubble: 'bg-peach-100 text-peach-600' },
   { key: 'lunch', label: 'Lunch', icon: 'bowl', bubble: 'bg-blush-100 text-blush-600' },
   { key: 'dinner', label: 'Dinner', icon: 'moon', bubble: 'bg-lavender-100 text-lavender-600' },
   { key: 'snack', label: 'Snacks', icon: 'sparkles', bubble: 'bg-plum-100 text-plum-500' },
@@ -109,10 +109,10 @@ async function handleRemove(id: string): Promise<void> {
 </script>
 
 <template>
-  <div class="animate-fade-up">
-    <header class="pt-2">
+  <div class="min-w-0 animate-fade-up">
+    <header class="min-w-0 pt-2">
       <p class="eyebrow">Food diary</p>
-      <h1 class="mt-1.5 font-display text-3xl font-semibold leading-tight tracking-tight text-ink">
+      <h1 class="mt-1.5 font-display text-2xl font-semibold leading-tight tracking-tight text-ink sm:text-3xl">
         Your nourishment
       </h1>
       <p class="mt-1 text-sm text-ink-soft">Notice patterns with curiosity, not judgement.</p>
@@ -120,24 +120,24 @@ async function handleRemove(id: string): Promise<void> {
 
     <p
       v-if="diaryError"
-      class="mt-3 rounded-2xl border border-blush-200/70 bg-blush-50 px-3.5 py-2.5 text-[11px] font-medium leading-relaxed text-blush-700"
+      class="mt-3 rounded-2xl border border-blush-200/70 bg-blush-50 px-3.5 py-2.5 text-xs font-medium leading-relaxed text-blush-700"
       role="alert"
     >
       {{ diaryError }}
     </p>
 
-    <section class="card-tight mt-5">
-      <div class="flex items-center justify-between gap-2">
-        <button type="button" class="btn-icon" aria-label="Previous day" @click="shiftDay(-1)">
+    <section class="card-tight mt-5 min-w-0">
+      <div class="flex min-w-0 items-center justify-between gap-2">
+        <button type="button" class="btn-icon shrink-0" aria-label="Previous day" @click="shiftDay(-1)">
           <AppIcon name="chevron-left" :size="16" />
         </button>
-        <div class="text-center">
-          <p class="text-sm font-semibold text-ink">{{ isTodaySelected ? 'Today' : formatMedium(selectedDate) }}</p>
-          <p class="text-[11px] text-ink-soft">{{ formatLong(selectedDate) }}</p>
+        <div class="min-w-0 flex-1 px-1 text-center">
+          <p class="break-words text-sm font-semibold text-ink">{{ isTodaySelected ? 'Today' : formatMedium(selectedDate) }}</p>
+          <p class="break-words text-xs text-ink-soft">{{ formatLong(selectedDate) }}</p>
           <button
             v-if="!isTodaySelected"
             type="button"
-            class="mt-1 text-[10px] font-semibold text-blush-600"
+            class="mt-1 min-h-11 text-xs font-semibold text-blush-600"
             @click="selectedDate = today"
           >
             Back to today
@@ -145,7 +145,7 @@ async function handleRemove(id: string): Promise<void> {
         </div>
         <button
           type="button"
-          class="btn-icon disabled:opacity-40"
+          class="btn-icon shrink-0 disabled:opacity-40"
           aria-label="Next day"
           :disabled="isTodaySelected"
           @click="shiftDay(1)"
@@ -155,76 +155,84 @@ async function handleRemove(id: string): Promise<void> {
       </div>
     </section>
 
-    <section class="card mt-4">
-      <div class="flex items-start justify-between gap-3">
-        <div>
+    <section class="card mt-4 min-w-0">
+      <div class="flex min-w-0 flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
           <p class="eyebrow">Daily balance</p>
-          <h2 class="section-title">{{ formatNumber(totals.calories) }} kcal</h2>
+          <h2 class="section-title">{{ formatNumber(totals.calories) }} kcal logged</h2>
         </div>
-        <PhaseBadge v-if="phase.ready" :phase="phase.phase" />
+        <PhaseBadge v-if="phase.ready" :phase="phase.phase" class="shrink-0" />
       </div>
 
-      <div class="mt-4 flex items-center gap-5">
-        <ProgressRing
-          :progress="calorieProgress"
-          :size="116"
-          :stroke="9"
-          color="#EE6C90"
-          color-end="#9A7CCB"
-          track="#FFF0F4"
-        >
-          <p class="text-[9px] font-semibold uppercase tracking-[0.12em] text-ink-faint">Target</p>
-          <p class="font-display text-xl font-semibold leading-none text-ink">{{ formatNumber(targets.target) }}</p>
-          <p class="mt-1 text-[9px] text-ink-soft">kcal</p>
-        </ProgressRing>
-        <div class="min-w-0 flex-1 space-y-3">
-          <MacroBar
-            label="Protein"
-            :value="totals.protein"
-            :target="targets.macros.protein"
-            bar-class="bg-gradient-to-r from-plum-300 to-plum-500"
-          />
-          <MacroBar
-            label="Carbs"
-            :value="totals.carbs"
-            :target="targets.macros.carbs"
-            bar-class="bg-gradient-to-r from-blush-300 to-blush-500"
-          />
-          <MacroBar
-            label="Fat"
-            :value="totals.fat"
-            :target="targets.macros.fat"
-            bar-class="bg-gradient-to-r from-lavender-300 to-lavender-500"
-          />
+      <template v-if="targets.target > 0">
+        <div class="mt-4 flex min-w-0 flex-col items-center gap-4 sm:flex-row sm:items-center">
+          <ProgressRing
+            class="self-center sm:self-auto"
+            :progress="calorieProgress"
+            :size="116"
+            :stroke="9"
+            color="#EE6C90"
+            color-end="#9A7CCB"
+            track="#FFF0F4"
+          >
+            <p class="text-xs font-semibold uppercase tracking-[0.1em] text-ink-soft">Target</p>
+            <p class="font-display text-xl font-semibold leading-none text-ink">{{ formatNumber(targets.target) }}</p>
+            <p class="mt-1 text-xs text-ink-soft">kcal</p>
+          </ProgressRing>
+          <div class="w-full min-w-0 space-y-3">
+            <MacroBar
+              label="Protein"
+              :value="totals.protein"
+              :target="targets.macros.protein"
+              bar-class="bg-gradient-to-r from-plum-300 to-plum-500"
+            />
+            <MacroBar
+              label="Carbs"
+              :value="totals.carbs"
+              :target="targets.macros.carbs"
+              bar-class="bg-gradient-to-r from-blush-300 to-blush-500"
+            />
+            <MacroBar
+              label="Fat"
+              :value="totals.fat"
+              :target="targets.macros.fat"
+              bar-class="bg-gradient-to-r from-lavender-300 to-lavender-500"
+            />
+          </div>
         </div>
-      </div>
 
-      <p class="mt-3 text-[11px] text-ink-soft">
-        <template v-if="remaining >= 0">{{ remaining }} kcal left in your estimate.</template>
-        <template v-else>{{ Math.abs(remaining) }} kcal over your estimate — completely okay.</template>
-      </p>
+        <p class="mt-3 text-xs leading-relaxed text-ink-soft">
+          <template v-if="remaining >= 0">{{ remaining }} kcal left in your estimate.</template>
+          <template v-else>{{ Math.abs(remaining) }} kcal over your estimate — completely okay.</template>
+        </p>
+      </template>
+      <div v-else class="mt-4 rounded-2xl bg-white/65 px-3.5 py-4 text-sm text-ink-soft">
+        <p class="font-semibold text-ink">No daily targets yet.</p>
+        <p class="mt-1 text-xs leading-relaxed">Set up your profile to see calorie and macro targets for this day.</p>
+        <NuxtLink to="/profile" class="btn-soft mt-3 inline-flex min-h-11">Set up profile</NuxtLink>
+      </div>
     </section>
 
-    <section v-for="meal in meals" :key="meal.key" class="card mt-4">
-      <div class="flex items-center justify-between gap-3">
+    <section v-for="meal in meals" :key="meal.key" class="card mt-4 min-w-0">
+      <div class="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex min-w-0 items-center gap-3">
           <span class="icon-bubble h-9 w-9" :class="meal.bubble">
             <AppIcon :name="meal.icon" :size="16" />
           </span>
           <div class="min-w-0">
             <h2 class="text-sm font-semibold text-ink">{{ meal.label }}</h2>
-            <p class="text-[11px] text-ink-soft">
+            <p class="text-xs text-ink-soft">
               {{ grouped[meal.key].length }} item{{ grouped[meal.key].length === 1 ? '' : 's' }} ·
               {{ grouped[meal.key].reduce((sum, entry) => sum + entry.calories, 0) }} kcal
             </p>
-            <p v-if="grouped[meal.key].length" class="mt-0.5 text-[10px] text-ink-faint">
+            <p v-if="grouped[meal.key].length" class="mt-0.5 text-xs leading-relaxed text-ink-soft">
               P {{ Math.round(mealTotals[meal.key].protein) }}g · C
               {{ Math.round(mealTotals[meal.key].carbs) }}g · F {{ Math.round(mealTotals[meal.key].fat) }}g
             </p>
           </div>
         </div>
-        <button type="button" class="btn-soft shrink-0" @click="openSheet(meal.key)">
-          <AppIcon name="plus" :size="13" /> Add
+        <button type="button" class="btn-soft min-h-11 w-full shrink-0 sm:w-auto" @click="openSheet(meal.key)">
+          <AppIcon name="plus" :size="13" class="shrink-0" /> Add
         </button>
       </div>
 
@@ -232,18 +240,18 @@ async function handleRemove(id: string): Promise<void> {
         <li
           v-for="entry in grouped[meal.key]"
           :key="entry.id"
-          class="flex items-start gap-2 rounded-2xl bg-white/65 px-3.5 py-2.5"
+          class="flex min-w-0 items-start gap-2 rounded-2xl bg-white/65 px-3.5 py-2.5"
         >
           <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-medium text-ink">{{ entry.name }}</p>
-            <p class="text-[10px] text-ink-soft">
+            <p class="text-xs leading-relaxed text-ink-soft">
               {{ entry.serving }} · P {{ entry.protein }}g · C {{ entry.carbs }}g · F {{ entry.fat }}g
             </p>
           </div>
-          <span class="text-xs font-semibold text-ink">{{ entry.calories }}</span>
+          <span class="shrink-0 whitespace-nowrap text-xs font-semibold text-ink">{{ entry.calories }}</span>
           <button
             type="button"
-            class="text-ink-faint transition hover:text-blush-500 disabled:opacity-40"
+            class="btn-icon h-11 w-11 shrink-0 bg-transparent text-ink-soft shadow-none transition hover:text-blush-700 disabled:opacity-40 sm:h-10 sm:w-10"
             :aria-label="`Remove ${entry.name}`"
             :disabled="removingId === entry.id"
             @click="handleRemove(entry.id)"
@@ -254,13 +262,13 @@ async function handleRemove(id: string): Promise<void> {
       </ul>
       <p
         v-else
-        class="mt-3 rounded-2xl border border-dashed border-plum-200/60 px-3 py-4 text-center text-[11px] text-ink-soft"
+        class="mt-3 rounded-2xl border border-dashed border-plum-200/60 px-3 py-4 text-center text-xs leading-relaxed text-ink-soft"
       >
         A gentle blank space. Add something whenever you're ready.
       </p>
     </section>
 
-    <p class="mt-5 px-2 text-center text-[10px] leading-relaxed text-ink-faint">
+    <p class="mt-5 px-2 text-center text-xs leading-relaxed text-ink-soft">
       Approximate values are welcome here. The goal is awareness, not perfection.
     </p>
 

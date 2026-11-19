@@ -31,14 +31,14 @@ const strokeColor = computed(() => (props.colorEnd ? `url(#${gradientId})` : pro
 
 <template>
   <div
-    class="relative inline-flex shrink-0 items-center justify-center"
-    :style="{ width: `${size}px`, height: `${size}px` }"
+    class="relative inline-flex aspect-square max-w-full shrink-0 items-center justify-center"
+    :style="{ width: `min(${size}px, 100%)` }"
     role="progressbar"
     :aria-valuenow="Math.round(clamped * 100)"
     aria-valuemin="0"
     aria-valuemax="100"
   >
-    <svg :width="size" :height="size" :viewBox="`0 0 ${size} ${size}`" class="-rotate-90">
+    <svg :viewBox="`0 0 ${size} ${size}`" class="absolute inset-0 h-full w-full -rotate-90" aria-hidden="true">
       <defs v-if="colorEnd">
         <linearGradient :id="gradientId" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" :stop-color="color" />

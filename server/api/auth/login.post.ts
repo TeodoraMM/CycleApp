@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const row = findUserByEmail(email)
-  if (!row || !verifyPassword(password, row.password_hash)) {
+  if (!row || row.account_status === 'disabled' || !verifyPassword(password, row.password_hash)) {
     throw createError({ statusCode: 401, statusMessage: 'Invalid email or password.' })
   }
 

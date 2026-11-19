@@ -10,6 +10,7 @@ export interface AuthUser {
   id: number
   email: string
   createdAt: string
+  isAdmin: boolean
 }
 
 export type DietPreference = 'balanced' | 'vegetarian' | 'vegan' | 'pescatarian'
@@ -127,4 +128,86 @@ export interface MealPlanSuggestion {
   totals: MacroTotals
   items: MealPlanMeal[]
   note: string
+}
+
+export type AccountStatus = 'active' | 'disabled'
+
+export interface SupplementRecord {
+  id: string
+  name: string
+  dose: string
+  frequency: string
+  notes: string
+}
+
+export interface QuestionnaireRecord {
+  id: string
+  question: string
+  answer: string
+  createdAt: string
+}
+
+export interface StoredUserState {
+  profile: UserProfile | null
+  cycle: CycleSettings | null
+  logs: Record<string, DailyLog>
+  supplements: SupplementRecord[]
+  questionnaire: QuestionnaireRecord[]
+  updatedAt: string | null
+}
+
+export interface AdminUserSummary {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  createdAt: string
+  status: AccountStatus
+  goal: Goal | null
+  lastActivityAt: string | null
+  isAdmin: boolean
+  hasProfile: boolean
+}
+
+export interface AdminUserDetail extends AdminUserSummary {
+  state: StoredUserState
+  entries: FoodEntry[]
+}
+
+export interface AdminUserListResponse {
+  users: AdminUserSummary[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export interface AdminOverview {
+  totals: {
+    users: number
+    newUsers: number
+    activeUsers: number
+    foodEntries: number
+    profiles: number
+  }
+  goalBreakdown: Array<{ goal: Goal; label: string; count: number }>
+  registrationTrend: Array<{ label: string; value: number }>
+  entryTrend: Array<{ label: string; value: number }>
+  recentUsers: AdminUserSummary[]
+}
+
+export interface AdminAuditEntry {
+  id: number
+  adminId: number
+  adminEmail: string
+  action: string
+  targetType: string
+  targetId: string | null
+  details: string
+  createdAt: string
+}
+
+export interface AdminAuditResponse {
+  entries: AdminAuditEntry[]
+  total: number
 }

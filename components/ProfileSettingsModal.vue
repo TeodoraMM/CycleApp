@@ -7,6 +7,7 @@ import { PHASE_META } from '~/data/phases'
 import { GOAL_LIST, GOAL_META } from '~/data/goals'
 import { normalizeCycleLength, normalizePeriodLength } from '~/utils/cycle'
 import { formatNumber, todayKey } from '~/utils/date'
+import { useModalAccessibility } from '~/composables/useModalAccessibility'
 
 const props = defineProps<{
   open: boolean
@@ -60,9 +61,12 @@ const currentPhase = computed(() => computePhase(today, state.value.cycle))
 const phase = computed(() => (currentPhase.value.ready ? currentPhase.value.phase : null))
 const phaseMeta = computed(() => (phase.value ? PHASE_META[phase.value] : null))
 
-const recommendedTargets = computed(() =>
-  calculateTargets({ ...state.value.profile, calorieMode: 'recommended' }, phase.value),
-)
+const recommendedTargets = computed(() => {
+  const profile = state.value.profile
+  const configured = profile.age > 0 && profile.heightCm > 0 && profile.weightKg > 0
+  const base = configured ? profile : { ...profile, age: 30, heightCm: 165, weightKg: 65 }
+  return calculateTargets({ ...base, calorieMode: 'recommended' }, phase.value)
+})
 const draftTargets = computed(() =>
   calculateTargets({ ...profileDraft, calorieMode: state.value.profile.calorieMode }, phase.value),
 )
@@ -139,17 +143,27 @@ const personalValid = computed(() => {
 
 function reset(): void {
   activeTab.value = 'calories'
-  mode.value = state.value.profile.calorieMode
-  Object.assign(profileDraft, state.value.profile)
+  const profile = state.value.profile
+  mode.value = profile.calorieMode
+  const configured = profile.age > 0 && profile.heightCm > 0 && profile.weightKg > 0
+  Object.assign(profileDraft, {
+    ...profile,
+    age: configured ? profile.age : 30,
+    heightCm: configured ? profile.heightCm : 165,
+    weightKg: configured ? profile.weightKg : 65,
+  })
   cycleLength.value = state.value.cycle.cycleLength
   periodLength.value = state.value.cycle.periodLength
   predictionsEnabled.value = state.value.cycle.predictionsEnabled
   personalSaved.value = false
-  const current = calculateTargets(state.value.profile, phase.value)
-  customCalories.value = current.target
-  customProtein.value = current.macros.protein
-  customCarbs.value = current.macros.carbs
-  customFat.value = current.macros.fat
+  const current = calculateTargets(profile, phase.value)
+  const suggested = configured
+    ? current
+    : calculateTargets({ ...profile, age: 30, heightCm: 165, weightKg: 65 }, phase.value)
+  customCalories.value = current.target || suggested.target || 2000
+  customProtein.value = current.macros.protein || suggested.macros.protein || 0
+  customCarbs.value = current.macros.carbs || suggested.macros.carbs || 0
+  customFat.value = current.macros.fat || suggested.macros.fat || 0
 }
 
 function applyCalorieSplit(): void {
@@ -207,9 +221,9 @@ function savePersonalDetails(): void {
   if (!personalValid.value) return
   updateProfile({
     name: profileDraft.name.trim(),
-    age: Math.min(80, Math.max(16, Number(profileDraft.age) || 30)),
-    heightCm: Math.min(220, Math.max(120, Number(profileDraft.heightCm) || 165)),
-    weightKg: Math.min(200, Math.max(35, Number(profileDraft.weightKg) || 65)),
+    age: Math.round(Math.min(80, Math.max(16, Number(profileDraft.age) || 0))),
+    heightCm: Math.round(Math.min(220, Math.max(120, Number(profileDraft.heightCm) || 0))),
+    weightKg: Math.round(Math.min(200, Math.max(35, Number(profileDraft.weightKg) || 0))),
     activityLevel: profileDraft.activityLevel,
     goal: profileDraft.goal,
     dietPreference: profileDraft.dietPreference,
@@ -236,47 +250,38 @@ function saveCycleSettings(): void {
 watch(
   () => props.open,
   (isOpen) => {
-    if (import.meta.client) {
-      document.body.style.overflow = isOpen ? 'hidden' : ''
-    }
     if (isOpen) reset()
   },
 )
 
-onBeforeUnmount(() => {
-  if (import.meta.client) document.body.style.overflow = ''
-})
+useModalAccessibility(computed(() => props.open), close)
 </script>
 
 <template>
   <Teleport to="body">
     <Transition name="fade">
-      <div
-        v-if="open"
-        class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-plum-700/30 p-4 backdrop-blur-sm"
-        @click.self="close"
-      >
+      <div v-if="open" class="modal-backdrop" @click.self="close">
         <section
-          class="animate-fade-up flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-[32px] border border-white/70 bg-cream shadow-lift"
+          class="animate-fade-up modal-panel bg-cream sm:max-w-md"
           role="dialog"
           aria-modal="true"
-          aria-label="Settings"
+          aria-labelledby="settings-title"
         >
-          <div class="px-5 pb-3 pt-4">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="eyebrow">Settings</p>
-                <h2 class="font-display text-xl font-semibold text-ink">Your settings</h2>
-                <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">
-                  Fine-tune your targets, personal details and cycle settings.
-                </p>
-              </div>
-              <button type="button" class="btn-icon" aria-label="Close" @click="close">
-                <AppIcon name="x" :size="16" />
-              </button>
+          <div class="modal-header border-b-0 pb-1">
+            <div class="min-w-0">
+              <p class="eyebrow">Settings</p>
+              <h2 id="settings-title" class="font-display text-xl font-semibold text-ink">Your settings</h2>
+              <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">
+                Fine-tune your targets, personal details and cycle settings.
+              </p>
             </div>
+            <button type="button" class="btn-icon shrink-0" aria-label="Close" @click="close">
+              <AppIcon name="x" :size="16" />
+            </button>
+          </div>
 
-            <div class="relative mt-3 grid grid-cols-3 rounded-full bg-plum-50/80 p-1 shadow-inner">
+          <div class="shrink-0 border-b border-cream-200 px-5 py-3">
+            <div class="relative grid grid-cols-3 rounded-full bg-plum-50/80 p-1 shadow-inner">
               <div
                 class="pointer-events-none absolute bottom-1 left-1 top-1 w-1/3 rounded-full bg-gradient-to-r from-blush-500 to-plum-400 shadow-glow transition-transform duration-300 ease-out"
                 :style="{ transform: `translateX(${activeTabIndex * 100}%)` }"
@@ -286,7 +291,7 @@ onBeforeUnmount(() => {
                 v-for="tab in settingsTabs"
                 :key="tab.key"
                 type="button"
-                class="relative z-10 flex items-center justify-center gap-1.5 rounded-full px-2 py-2 text-xs font-semibold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum-300"
+                class="relative z-10 flex min-h-11 items-center justify-center gap-1.5 rounded-full px-1 py-2 text-xs font-semibold transition-colors duration-200 sm:min-h-0 sm:px-2"
                 :class="activeTab === tab.key ? 'text-white' : 'text-ink-soft hover:text-plum-600'"
                 :aria-current="activeTab === tab.key ? 'page' : undefined"
                 @click="activeTab = tab.key"
@@ -297,14 +302,14 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div class="flex-1 overflow-y-auto px-5 pb-6">
+          <div class="modal-body">
             <Transition name="fade" mode="out-in">
               <div :key="activeTab">
                 <template v-if="activeTab === 'calories'">
               <div class="flex gap-1 rounded-full bg-white/70 p-1">
                 <button
                   type="button"
-                  class="flex-1 rounded-full px-3 py-2 text-xs font-semibold transition"
+                  class="flex min-h-11 flex-1 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold transition sm:min-h-0"
                   :class="mode === 'recommended' ? 'bg-white text-plum-600 shadow-sm' : 'text-ink-soft'"
                   @click="mode = 'recommended'"
                 >
@@ -312,7 +317,7 @@ onBeforeUnmount(() => {
                 </button>
                 <button
                   type="button"
-                  class="flex-1 rounded-full px-3 py-2 text-xs font-semibold transition"
+                  class="flex min-h-11 flex-1 items-center justify-center rounded-full px-3 py-2 text-xs font-semibold transition sm:min-h-0"
                   :class="mode === 'custom' ? 'bg-white text-plum-600 shadow-sm' : 'text-ink-soft'"
                   @click="mode = 'custom'"
                 >
@@ -360,7 +365,7 @@ onBeforeUnmount(() => {
                     Enter a calorie target between 800 and 6000 kcal.
                   </p>
 
-                  <div class="mt-3 grid grid-cols-3 gap-2">
+                  <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
                     <div>
                       <label class="label" for="custom-protein">Protein</label>
                       <input
@@ -374,7 +379,7 @@ onBeforeUnmount(() => {
                         class="input mt-1"
                         @input="applyMacroCalories"
                       />
-                      <p class="mt-1 text-center text-[10px] font-medium text-plum-600">
+                      <p class="mt-1 text-center text-[11px] font-medium text-plum-600">
                         {{ macroPercent.protein }}%
                       </p>
                     </div>
@@ -391,7 +396,7 @@ onBeforeUnmount(() => {
                         class="input mt-1"
                         @input="applyMacroCalories"
                       />
-                      <p class="mt-1 text-center text-[10px] font-medium text-blush-600">
+                      <p class="mt-1 text-center text-[11px] font-medium text-blush-600">
                         {{ macroPercent.carbs }}%
                       </p>
                     </div>
@@ -408,7 +413,7 @@ onBeforeUnmount(() => {
                         class="input mt-1"
                         @input="applyMacroCalories"
                       />
-                      <p class="mt-1 text-center text-[10px] font-medium text-lavender-600">
+                      <p class="mt-1 text-center text-[11px] font-medium text-lavender-600">
                         {{ macroPercent.fat }}%
                       </p>
                     </div>
@@ -430,12 +435,12 @@ onBeforeUnmount(() => {
                 <button type="button" class="btn-primary mt-4 w-full" :disabled="!isValidCustom" @click="saveCustom">
                   Use custom targets
                 </button>
-                <p class="mt-2 text-center text-[10px] leading-relaxed text-ink-faint">
+                <p class="mt-2 text-center text-[11px] leading-relaxed text-ink-soft">
                   Your calorie and macro targets will update across the diary and meal plan.
                 </p>
               </template>
 
-              <p class="mt-4 text-center text-[10px] leading-relaxed text-ink-faint">
+              <p class="mt-4 text-center text-[11px] leading-relaxed text-ink-soft">
                 Supportive estimates, not a prescription. Adjust whenever your needs change.
               </p>
             </template>
@@ -456,7 +461,7 @@ onBeforeUnmount(() => {
                   />
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div>
                     <label class="label" for="settings-age">Age</label>
                     <input
@@ -499,12 +504,12 @@ onBeforeUnmount(() => {
                       {{ option.label }}
                     </option>
                   </select>
-                  <p class="mt-1 text-[10px] text-ink-soft">{{ activityHint }}</p>
+                  <p class="mt-1 text-[11px] text-ink-soft">{{ activityHint }}</p>
                 </div>
 
                 <div>
                   <span class="label">Your target</span>
-                  <p class="mt-1 text-[10px] leading-relaxed text-ink-soft">
+                  <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">
                     We'll shape your calorie target and meal ideas around this.
                   </p>
                   <div class="mt-1.5 grid grid-cols-2 gap-2">
@@ -512,7 +517,7 @@ onBeforeUnmount(() => {
                       v-for="goalKey in GOAL_LIST"
                       :key="goalKey"
                       type="button"
-                      class="rounded-2xl border px-2.5 py-3 text-left transition"
+                      class="min-h-11 rounded-2xl border px-2.5 py-3 text-left transition sm:min-h-0"
                       :class="
                         profileDraft.goal === goalKey
                           ? 'border-blush-300 bg-blush-50 shadow-sm'
@@ -520,9 +525,9 @@ onBeforeUnmount(() => {
                       "
                       @click="profileDraft.goal = goalKey"
                     >
-                      <span class="text-blush-500"><AppIcon :name="GOAL_META[goalKey].icon" :size="15" /></span>
+                      <span class="text-blush-700"><AppIcon :name="GOAL_META[goalKey].icon" :size="15" /></span>
                       <span class="mt-1 block text-xs font-semibold text-ink">{{ GOAL_META[goalKey].label }}</span>
-                      <span class="mt-0.5 block text-[9px] leading-snug text-ink-soft">{{ GOAL_META[goalKey].hint }}</span>
+                      <span class="mt-0.5 block text-[10px] leading-snug text-ink-soft">{{ GOAL_META[goalKey].hint }}</span>
                     </button>
                   </div>
                 </div>
@@ -534,7 +539,7 @@ onBeforeUnmount(() => {
                       v-for="option in dietOptions"
                       :key="option.value"
                       type="button"
-                      class="rounded-full px-3.5 py-2 text-xs font-semibold transition"
+                      class="min-h-11 rounded-full px-3.5 py-2 text-xs font-semibold transition sm:min-h-0"
                       :class="
                         profileDraft.dietPreference === option.value
                           ? 'bg-plum-500 text-white shadow-sm'
@@ -571,13 +576,13 @@ onBeforeUnmount(() => {
                   <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <button
                       type="button"
-                      class="inline-flex items-center gap-1 text-[11px] font-semibold text-plum-600"
+                      class="inline-flex min-h-11 items-center gap-1 text-[11px] font-semibold text-plum-600 sm:min-h-0"
                       @click="activeTab = 'cycle'"
                     >
                       Edit cycle settings
                       <AppIcon name="arrow-right" :size="12" />
                     </button>
-                    <NuxtLink to="/cycle" class="text-[11px] font-semibold text-plum-600" @click="close">
+                    <NuxtLink to="/cycle" class="inline-flex min-h-11 items-center text-[11px] font-semibold text-plum-600 sm:min-h-0" @click="close">
                       Open calendar
                     </NuxtLink>
                   </div>
@@ -592,7 +597,7 @@ onBeforeUnmount(() => {
                     P {{ draftTargets.macros.protein }}g · C {{ draftTargets.macros.carbs }}g · F
                     {{ draftTargets.macros.fat }}g
                   </p>
-                  <p class="mt-1 text-[10px] leading-relaxed text-ink-faint">
+                  <p class="mt-1 text-[11px] leading-relaxed text-ink-soft">
                     Preview only. Save to apply these details.
                   </p>
                 </div>
@@ -637,7 +642,7 @@ onBeforeUnmount(() => {
                     inputmode="numeric"
                     class="input mt-1"
                   />
-                  <p class="mt-1 text-[10px] text-ink-soft">From one period start to the next.</p>
+                  <p class="mt-1 text-[11px] text-ink-soft">From one period start to the next.</p>
                 </div>
 
                 <div class="rounded-2xl bg-white/70 p-4">
@@ -652,7 +657,7 @@ onBeforeUnmount(() => {
                     inputmode="numeric"
                     class="input mt-1"
                   />
-                  <p class="mt-1 text-[10px] text-ink-soft">
+                  <p class="mt-1 text-[11px] text-ink-soft">
                     Filled in automatically when you log a new period start.
                   </p>
                 </div>
@@ -660,7 +665,7 @@ onBeforeUnmount(() => {
                 <div class="flex items-center justify-between gap-3 rounded-2xl bg-white/70 p-4">
                   <div class="min-w-0">
                     <p class="text-sm font-medium text-ink">Cycle predictions</p>
-                    <p class="mt-0.5 text-[10px] leading-relaxed text-ink-soft">
+                    <p class="mt-0.5 text-[11px] leading-relaxed text-ink-soft">
                       Highlight predicted periods, fertile days and ovulation in the calendar.
                     </p>
                   </div>
@@ -669,13 +674,13 @@ onBeforeUnmount(() => {
                     role="switch"
                     :aria-checked="predictionsEnabled"
                     aria-label="Cycle predictions"
-                    class="relative h-7 w-12 shrink-0 rounded-full transition"
+                    class="relative h-11 w-16 shrink-0 rounded-full transition sm:h-7 sm:w-12"
                     :class="predictionsEnabled ? 'bg-blush-400' : 'bg-plum-200'"
                     @click="predictionsEnabled = !predictionsEnabled"
                   >
                     <span
-                      class="absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-all"
-                      :class="predictionsEnabled ? 'left-6' : 'left-1'"
+                      class="absolute top-1/2 h-6 w-6 -translate-y-1/2 rounded-full bg-white shadow-sm transition-all sm:h-5 sm:w-5"
+                      :class="predictionsEnabled ? 'left-9 sm:left-6' : 'left-1.5 sm:left-1'"
                     />
                   </button>
                 </div>
@@ -692,12 +697,12 @@ onBeforeUnmount(() => {
                 >
                   Save cycle settings
                 </button>
-                <p class="text-center text-[10px] leading-relaxed text-ink-faint">
+                <p class="text-center text-[11px] leading-relaxed text-ink-soft">
                   Period starts themselves are logged on the Cycle page calendar.
                 </p>
                 <NuxtLink
                   to="/cycle"
-                  class="flex items-center justify-center gap-1 text-[11px] font-semibold text-plum-600"
+                  class="flex min-h-11 items-center justify-center gap-1 text-[11px] font-semibold text-plum-600 sm:min-h-0"
                   @click="close"
                 >
                   Open cycle calendar

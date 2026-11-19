@@ -2,6 +2,7 @@
 import type { CustomFoodInput, MealType, OffFood, PresetFood } from '~/types'
 import { FOOD_PRESETS } from '~/data/foods'
 import { useOpenFoodFacts } from '~/composables/useOpenFoodFacts'
+import { useModalAccessibility } from '~/composables/useModalAccessibility'
 
 const props = defineProps<{
   open: boolean
@@ -82,6 +83,12 @@ function clearSelection(): void {
   selectedFood.value = null
   grams.value = 0
 }
+
+function close(): void {
+  emit('close')
+}
+
+useModalAccessibility(computed(() => props.open), close)
 
 function submitPortion(): void {
   const food = selectedFood.value
@@ -190,9 +197,6 @@ function resetOnlineSearch(): void {
 watch(
   () => props.open,
   (isOpen) => {
-    if (import.meta.client) {
-      document.body.style.overflow = isOpen ? 'hidden' : ''
-    }
     if (!isOpen) return
     mode.value = 'quick'
     query.value = ''
@@ -208,7 +212,6 @@ watch(mode, () => {
 
 onBeforeUnmount(() => {
   if (searchTimer) clearTimeout(searchTimer)
-  if (import.meta.client) document.body.style.overflow = ''
 })
 
 const canSubmitCustom = computed(
@@ -231,24 +234,20 @@ function submitCustom(): void {
 <template>
   <Teleport to="body">
     <Transition name="fade">
-      <div
-        v-if="open"
-        class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-plum-700/30 p-4 backdrop-blur-sm"
-        @click.self="emit('close')"
-      >
+      <div v-if="open" class="modal-backdrop" @click.self="close">
         <section
-          class="animate-fade-up flex max-h-[88vh] w-full max-w-md flex-col overflow-hidden rounded-[32px] border border-white/70 bg-cream shadow-lift"
+          class="animate-fade-up modal-panel bg-cream sm:max-w-md"
           role="dialog"
           aria-modal="true"
-          :aria-label="`Add food to ${MEAL_LABELS[meal]}`"
+          aria-labelledby="food-sheet-title"
         >
-          <div class="px-5 pb-3 pt-3">
-            <div class="mt-1 flex items-center justify-between">
-              <div>
+          <div class="modal-header flex-col items-stretch justify-start">
+            <div class="flex items-center justify-between gap-3">
+              <div class="min-w-0">
                 <p class="eyebrow">Add to {{ MEAL_LABELS[meal] }}</p>
-                <h2 class="font-display text-xl font-semibold text-ink">What are you having?</h2>
+                <h2 id="food-sheet-title" class="font-display text-xl font-semibold text-ink">What are you having?</h2>
               </div>
-              <button type="button" class="btn-icon" aria-label="Close" @click="emit('close')">
+              <button type="button" class="btn-icon shrink-0" aria-label="Close" @click="close">
                 <AppIcon name="x" :size="16" />
               </button>
             </div>
@@ -256,7 +255,7 @@ function submitCustom(): void {
           <div class="mt-4 flex gap-1 rounded-full bg-white/70 p-1">
             <button
               type="button"
-              class="flex-1 rounded-full px-3 py-2 text-xs font-semibold transition"
+              class="flex min-h-11 flex-1 items-center justify-center rounded-full px-1 py-2 text-[11px] font-semibold transition sm:min-h-0 sm:px-3 sm:text-xs"
               :class="mode === 'quick' ? 'bg-white text-plum-600 shadow-sm' : 'text-ink-soft'"
               @click="mode = 'quick'"
             >
@@ -264,7 +263,7 @@ function submitCustom(): void {
             </button>
             <button
               type="button"
-              class="flex-1 rounded-full px-3 py-2 text-xs font-semibold transition"
+              class="flex min-h-11 flex-1 items-center justify-center rounded-full px-1 py-2 text-[11px] font-semibold transition sm:min-h-0 sm:px-3 sm:text-xs"
               :class="mode === 'online' ? 'bg-white text-plum-600 shadow-sm' : 'text-ink-soft'"
               @click="mode = 'online'"
             >
@@ -272,7 +271,7 @@ function submitCustom(): void {
             </button>
             <button
               type="button"
-              class="flex-1 rounded-full px-3 py-2 text-xs font-semibold transition"
+              class="flex min-h-11 flex-1 items-center justify-center rounded-full px-1 py-2 text-[11px] font-semibold transition sm:min-h-0 sm:px-3 sm:text-xs"
               :class="mode === 'custom' ? 'bg-white text-plum-600 shadow-sm' : 'text-ink-soft'"
               @click="mode = 'custom'"
             >
@@ -333,8 +332,8 @@ function submitCustom(): void {
                     <AppIcon name="sparkles" :size="15" />
                   </span>
                 </label>
-                <form class="mt-2 flex gap-2" @submit.prevent="submitBarcode">
-                  <label class="relative block flex-1">
+                <form class="mt-2 flex flex-wrap gap-2 sm:flex-nowrap" @submit.prevent="submitBarcode">
+                  <label class="relative block min-w-[9rem] flex-1">
                     <span class="sr-only">Enter a barcode</span>
                     <input
                       v-model="barcode"
@@ -344,13 +343,13 @@ function submitCustom(): void {
                       placeholder="Or enter a barcode"
                     />
                   </label>
-                  <button type="submit" class="btn-soft shrink-0" :disabled="barcodeLoading">
+                  <button type="submit" class="btn-soft min-h-11 shrink-0 sm:min-h-0" :disabled="barcodeLoading">
                     <AppIcon name="target" :size="13" />
                     {{ barcodeLoading ? 'Looking...' : 'Look up' }}
                   </button>
                 </form>
                 <p v-if="barcodeError" class="mt-1 text-[11px] font-medium text-blush-600">{{ barcodeError }}</p>
-                <p class="mt-2 text-[10px] leading-relaxed text-ink-faint">
+                <p class="mt-2 text-[11px] leading-relaxed text-ink-soft">
                   Per 100 g values from USDA FoodData Central and Open Food Facts. Adjust the grams after choosing a
                   product.
                 </p>
@@ -378,7 +377,7 @@ function submitCustom(): void {
                           <span class="block min-w-0 truncate text-sm font-semibold text-ink">{{ item.name }}</span>
                           <span
                             v-if="item.source === 'usda'"
-                            class="shrink-0 rounded-full bg-plum-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-plum-600"
+                            class="shrink-0 rounded-full bg-plum-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-plum-600"
                           >
                             Whole Food
                           </span>
@@ -399,7 +398,7 @@ function submitCustom(): void {
           </template>
 
           <div v-else class="mt-3 flex-1 overflow-y-auto px-5 pb-8">
-            <button type="button" class="btn-soft mb-3" @click="clearSelection">
+            <button type="button" class="btn-soft mb-3 min-h-11 sm:min-h-0" @click="clearSelection">
               <AppIcon name="chevron-left" :size="13" />
               {{ mode === 'online' ? 'Back to search' : 'All foods' }}
             </button>
@@ -434,27 +433,29 @@ function submitCustom(): void {
                 </p>
               </div>
 
-              <div class="mt-3 grid grid-cols-4 gap-1.5">
+               <div class="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+
                 <div class="rounded-2xl bg-cream-100 px-2 py-2 text-center">
-                  <p class="text-[9px] font-semibold uppercase tracking-wider text-ink-faint">Kcal</p>
+                  <p class="text-[11px] font-semibold uppercase tracking-wider text-ink-soft"
+>Kcal</p>
                   <p class="mt-0.5 font-display text-base font-semibold text-ink">{{ portion.calories }}</p>
                 </div>
                 <div class="rounded-2xl bg-plum-50 px-2 py-2 text-center">
-                  <p class="text-[9px] font-semibold uppercase tracking-wider text-plum-500">Protein</p>
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-plum-500">Protein</p>
                   <p class="mt-0.5 font-display text-base font-semibold text-ink">{{ portion.protein }} g</p>
                 </div>
                 <div class="rounded-2xl bg-blush-50 px-2 py-2 text-center">
-                  <p class="text-[9px] font-semibold uppercase tracking-wider text-blush-500">Carbs</p>
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-blush-700">Carbs</p>
                   <p class="mt-0.5 font-display text-base font-semibold text-ink">{{ portion.carbs }} g</p>
                 </div>
                 <div class="rounded-2xl bg-lavender-50 px-2 py-2 text-center">
-                  <p class="text-[9px] font-semibold uppercase tracking-wider text-lavender-500">Fat</p>
+                  <p class="text-[10px] font-semibold uppercase tracking-wider text-lavender-700">Fat</p>
                   <p class="mt-0.5 font-display text-base font-semibold text-ink">{{ portion.fat }} g</p>
                 </div>
               </div>
 
               <div class="mt-4 flex gap-2">
-                <button type="button" class="btn-soft" @click="clearSelection">Back</button>
+                <button type="button" class="btn-soft min-h-11 sm:min-h-0" @click="clearSelection">Back</button>
                 <button
                   type="button"
                   class="btn-primary flex-1"

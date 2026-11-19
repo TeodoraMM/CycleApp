@@ -82,10 +82,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="animate-fade-up">
-    <header class="pt-2">
+  <div class="min-w-0 animate-fade-up">
+    <header class="min-w-0 pt-2">
       <p class="eyebrow">Cycle</p>
-      <h1 class="mt-1.5 font-display text-3xl font-semibold leading-tight tracking-tight text-ink">
+      <h1 class="mt-1.5 font-display text-2xl font-semibold leading-tight tracking-tight text-ink sm:text-3xl">
         Your rhythm
       </h1>
       <p class="mt-1 text-sm text-ink-soft">
@@ -93,8 +93,9 @@ onBeforeUnmount(() => {
       </p>
     </header>
 
-    <div class="mt-4">
+    <div class="mt-4 min-w-0">
       <CycleCalendar
+        class="[&_span]:text-xs [&_.grid>button]:h-11 [&_.grid>button]:w-full [&_.grid>span]:h-11"
         :month="cursor"
         :selected="selected"
         :cycle="state.cycle"
@@ -103,21 +104,21 @@ onBeforeUnmount(() => {
       />
     </div>
 
-    <section class="card mt-4">
-      <div class="flex items-start justify-between gap-3">
-        <div>
+    <section class="card mt-4 min-w-0">
+      <div class="flex min-w-0 flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
           <p class="eyebrow">Selected day</p>
-          <h2 class="section-title mt-1">{{ formatLong(selected) }}</h2>
+          <h2 class="section-title mt-1 break-words">{{ formatLong(selected) }}</h2>
         </div>
-        <PhaseBadge v-if="phase.ready" :phase="phase.phase" />
-        <span v-else class="chip">No phase yet</span>
+        <PhaseBadge v-if="phase.ready" :phase="phase.phase" class="shrink-0" />
+        <span v-else class="chip shrink-0">No phase yet</span>
       </div>
 
       <p class="mt-2 text-sm leading-relaxed text-ink-soft">{{ statusText }}</p>
 
-      <div class="mt-3 flex flex-wrap gap-1.5">
+      <div class="mt-3 flex min-w-0 flex-wrap gap-1.5">
         <span v-if="isStartDate" class="chip-accent bg-blush-100 text-blush-700">
-          <AppIcon name="droplet" :size="12" /> Period start
+          <AppIcon name="droplet" :size="12" class="shrink-0" /> Period start
         </span>
         <span v-else-if="isLoggedDay" class="chip-accent bg-blush-50 text-blush-600">
           Logged period day
@@ -132,45 +133,45 @@ onBeforeUnmount(() => {
         <span v-if="!predictionsOn" class="chip">Predictions off</span>
       </div>
 
-      <button type="button" :class="actionClass" :disabled="isFuture" @click="togglePeriodStart">
-        <AppIcon :name="isStartDate ? 'x' : 'droplet'" :size="15" />
+      <button type="button" class="min-h-11" :class="actionClass" :disabled="isFuture" @click="togglePeriodStart">
+        <AppIcon :name="isStartDate ? 'x' : 'droplet'" :size="15" class="shrink-0" />
         {{ actionLabel }}
       </button>
 
       <p
         v-if="warning"
         role="alert"
-        class="mt-2 text-center text-[11px] font-medium leading-relaxed text-blush-600"
+        class="mt-2 text-center text-xs font-medium leading-relaxed text-blush-600"
       >
         {{ warning }}
       </p>
       <p
         v-else-if="feedback"
-        class="mt-2 flex items-center justify-center gap-1.5 text-[11px] font-medium text-lavender-600"
+        class="mt-2 flex items-center justify-center gap-1.5 text-xs font-medium text-lavender-600"
       >
-        <AppIcon name="check" :size="13" /> {{ feedback }}
+        <AppIcon name="check" :size="13" class="shrink-0" /> {{ feedback }}
       </p>
-      <p v-else-if="isFuture" class="mt-2 text-center text-[10px] text-ink-soft">
+      <p v-else-if="isFuture" class="mt-2 text-center text-xs leading-relaxed text-ink-soft">
         Periods can only be logged on or before today.
       </p>
-      <p v-else class="mt-2 text-center text-[10px] leading-relaxed text-ink-soft">
+      <p v-else class="mt-2 text-center text-xs leading-relaxed text-ink-soft">
         Logging a start fills in {{ state.cycle.periodLength }} period days and refreshes every prediction.
       </p>
     </section>
 
-    <section class="card mt-4">
-      <div class="flex items-center justify-between gap-3">
-        <div>
+    <section class="card mt-4 min-w-0">
+      <div class="flex min-w-0 flex-wrap items-center justify-between gap-3">
+        <div class="min-w-0">
           <p class="eyebrow">History</p>
           <h2 class="section-title">Your cycles</h2>
         </div>
-        <span class="chip">{{ history.length }} {{ history.length === 1 ? 'cycle' : 'cycles' }}</span>
+        <span class="chip shrink-0">{{ history.length }} {{ history.length === 1 ? 'cycle' : 'cycles' }}</span>
       </div>
 
-      <div v-if="history.length" class="mt-4 overflow-x-auto">
+      <div v-if="history.length" class="mt-4 min-w-0 overflow-x-auto">
         <table class="w-full border-collapse text-left text-xs">
           <thead>
-            <tr class="border-b border-plum-100 text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
+            <tr class="border-b border-plum-100 text-xs font-semibold uppercase tracking-wider text-ink-soft">
               <th class="pb-2 pr-2 font-semibold">Start</th>
               <th class="pb-2 pr-2 font-semibold">Last day</th>
               <th class="pb-2 pr-2 font-semibold">Duration</th>
@@ -188,7 +189,7 @@ onBeforeUnmount(() => {
             </tr>
           </tbody>
         </table>
-        <p class="mt-3 text-[10px] leading-relaxed text-ink-soft">
+        <p class="mt-3 text-xs leading-relaxed text-ink-soft">
           Cycle length runs from one period start to the next. Starts closer than
           {{ MIN_CYCLE_GAP_DAYS }} days are treated as one cycle.
         </p>

@@ -72,7 +72,7 @@ onBeforeUnmount(() => {
     <NuxtLink
       v-if="!user"
       to="/login"
-      class="flex h-10 w-10 items-center justify-center rounded-full border border-white/90 bg-white/80 text-sm font-semibold text-plum-600 shadow-sm transition hover:bg-white"
+      class="flex h-11 w-11 items-center justify-center rounded-full border border-white/90 bg-white/80 text-sm font-semibold text-plum-600 shadow-sm transition hover:bg-white"
       aria-label="Log in"
     >
       <AppIcon name="user" :size="18" />
@@ -82,7 +82,7 @@ onBeforeUnmount(() => {
       v-else
       ref="buttonRef"
       type="button"
-      class="flex h-10 w-10 items-center justify-center rounded-full border border-white/90 bg-white/80 text-sm font-semibold text-plum-600 shadow-sm transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blush-300"
+      class="flex h-11 w-11 items-center justify-center rounded-full border border-white/90 bg-white/80 text-sm font-semibold text-plum-600 shadow-sm transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blush-400"
       :class="menuOpen ? 'ring-2 ring-blush-200' : ''"
       aria-label="Open account menu"
       aria-haspopup="menu"
@@ -106,12 +106,13 @@ onBeforeUnmount(() => {
         v-if="menuOpen && user"
         id="user-menu"
         ref="menuRef"
-        class="absolute right-0 top-full z-40 mt-2 w-64 max-w-[calc(100vw-2.5rem)] origin-top-right rounded-2xl border border-white/90 bg-white/95 p-1.5 shadow-lg backdrop-blur-xl"
+        class="absolute right-0 top-full z-40 mt-2 max-h-[min(70vh,24rem)] w-[min(16rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] origin-top-right overflow-y-auto overscroll-contain rounded-2xl border border-white/90 bg-white/95 p-1.5 shadow-lg backdrop-blur-xl"
         role="menu"
         aria-label="Account menu"
+        aria-orientation="vertical"
       >
         <div class="px-3 pb-2 pt-2.5">
-          <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-plum-400">Signed in</p>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-plum-600">Signed in</p>
           <p class="mt-0.5 truncate text-sm font-semibold text-ink">{{ user.email }}</p>
         </div>
 
@@ -121,7 +122,7 @@ onBeforeUnmount(() => {
           <NuxtLink
             to="/profile"
             role="menuitem"
-            class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-soft transition hover:bg-blush-50 hover:text-plum-600"
+            class="flex min-h-11 items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-soft transition hover:bg-blush-50 hover:text-plum-600 focus-visible:bg-blush-50 focus-visible:text-plum-600"
             @click="closeMenu"
           >
             <AppIcon name="user" :size="16" />
@@ -131,7 +132,7 @@ onBeforeUnmount(() => {
           <button
             type="button"
             role="menuitem"
-            class="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink-soft transition hover:bg-blush-50 hover:text-blush-600 disabled:cursor-not-allowed disabled:opacity-60"
+            class="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-ink-soft transition hover:bg-blush-50 hover:text-blush-600 focus-visible:bg-blush-50 focus-visible:text-blush-600 disabled:cursor-not-allowed disabled:opacity-60"
             :disabled="loggingOut"
             @click="handleLogout"
           >

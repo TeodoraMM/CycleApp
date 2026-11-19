@@ -112,34 +112,34 @@ function dayClasses(key: string): string {
 </script>
 
 <template>
-  <section class="card">
-    <div class="flex items-center justify-between">
-      <button type="button" class="btn-icon" aria-label="Previous month" @click="emit('shift', -1)">
+  <section class="card px-1 py-4 sm:px-5 sm:py-5">
+    <div class="flex items-center justify-between gap-2 px-1 sm:px-0">
+      <button type="button" class="btn-icon shrink-0" aria-label="Previous month" @click="emit('shift', -1)">
         <AppIcon name="chevron-left" :size="16" />
       </button>
-      <div class="text-center">
+      <div class="min-w-0 text-center">
         <p class="eyebrow">Cycle calendar</p>
-        <h2 class="font-display text-lg font-semibold text-ink">{{ title }}</h2>
+        <h2 class="truncate font-display text-base font-semibold text-ink sm:text-lg">{{ title }}</h2>
       </div>
-      <button type="button" class="btn-icon" aria-label="Next month" @click="emit('shift', 1)">
+      <button type="button" class="btn-icon shrink-0" aria-label="Next month" @click="emit('shift', 1)">
         <AppIcon name="chevron-right" :size="16" />
       </button>
     </div>
 
-    <div class="mt-4 grid grid-cols-7 gap-y-1 text-center">
+    <div class="mt-4 grid grid-cols-7 gap-x-0 gap-y-1 text-center sm:gap-x-1">
       <span
         v-for="(day, index) in weekdays"
         :key="`${day}-${index}`"
-        class="pb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-faint"
+        class="pb-1 text-[10px] font-semibold uppercase tracking-normal text-ink-soft sm:text-[11px] sm:tracking-wider"
       >
         {{ day }}
       </span>
       <template v-for="cell in cells" :key="cell.key">
-        <span v-if="!cell.current" class="h-10" />
+        <span v-if="!cell.current" class="h-11 sm:h-12" />
         <button
           v-else
           type="button"
-          class="relative mx-auto flex h-10 w-10 items-center justify-center rounded-2xl text-xs font-semibold transition duration-200"
+          class="relative mx-auto flex h-11 w-full min-w-0 items-center justify-center rounded-xl text-xs font-semibold transition duration-200 sm:h-12 sm:rounded-2xl sm:text-sm"
           :class="dayClasses(cell.key)"
           :aria-label="`Select ${cell.key}`"
           :aria-pressed="selected === cell.key"
@@ -148,28 +148,28 @@ function dayClasses(key: string): string {
           {{ cell.day }}
           <span
             v-if="dotClassFor(cell.key)"
-            class="absolute bottom-1.5 h-1 w-1 rounded-full"
+            class="absolute bottom-1 h-1 w-1 rounded-full sm:bottom-1.5"
             :class="dotClassFor(cell.key)"
           />
         </button>
       </template>
     </div>
 
-    <div class="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5">
-      <span class="flex items-center gap-1.5 text-[10px] text-ink-soft">
+    <div class="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 sm:gap-x-3">
+      <span class="flex min-w-0 items-center gap-1.5 text-[11px] text-ink-soft sm:text-[11px]">
         <span class="h-2.5 w-2.5 rounded-md bg-blush-100 ring-1 ring-blush-400" /> Logged period
       </span>
-      <span class="flex items-center gap-1.5 text-[10px] text-ink-soft">
+      <span class="flex min-w-0 items-center gap-1.5 text-[11px] text-ink-soft sm:text-[11px]">
         <span class="h-2.5 w-2.5 rounded-md bg-plum-50/80 ring-1 ring-plum-200" /> Fertile window
       </span>
       <template v-if="predictionsOn">
-        <span class="flex items-center gap-1.5 text-[10px] text-ink-soft">
+        <span class="flex min-w-0 items-center gap-1.5 text-[11px] text-ink-soft sm:text-[11px]">
           <span class="h-2.5 w-2.5 rounded-md bg-blush-50 ring-1 ring-blush-200" /> Predicted period
         </span>
-        <span class="flex items-center gap-1.5 text-[10px] text-ink-soft">
+        <span class="flex min-w-0 items-center gap-1.5 text-[11px] text-ink-soft sm:text-[11px]">
           <span class="h-2.5 w-2.5 rounded-md ring-2 ring-plum-300" /> Ovulation
         </span>
-        <span v-for="phase in PHASE_LIST" :key="phase" class="flex items-center gap-1.5 text-[10px] text-ink-soft">
+        <span v-for="phase in PHASE_LIST" :key="phase" class="flex items-center gap-1.5 text-[11px] text-ink-soft">
           <span class="h-1.5 w-1.5 rounded-full" :class="PHASE_META[phase].dotClass" />
           {{ PHASE_META[phase].label }}
         </span>

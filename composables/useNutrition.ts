@@ -1,6 +1,7 @@
 import type { ActivityLevel, FoodEntry, MacroTotals, Phase, UserProfile } from '~/types'
 import { PHASE_META } from '~/data/phases'
 import { GOAL_META } from '~/data/goals'
+import { hasNutritionData, isProfileConfigured } from '~/utils/userState'
 
 export interface NutritionTargets {
   bmr: number
@@ -22,24 +23,44 @@ const ACTIVITY_FACTORS: Record<ActivityLevel, number> = {
   veryActive: 1.9,
 }
 
+function emptyTargets(): NutritionTargets {
+  return {
+    bmr: 0,
+    tdee: 0,
+    target: 0,
+    recommendedTarget: 0,
+    phaseAdjustment: 0,
+    goalAdjustment: 0,
+    macros: { protein: 0, carbs: 0, fat: 0 },
+    split: { protein: 0, carbs: 0, fat: 0 },
+    waterTarget: 0,
+  }
+}
+
 export function calculateTargets(profile: UserProfile, phase: Phase | null): NutritionTargets {
-  const weight = Math.max(35, profile.weightKg || 65)
-  const height = Math.max(120, profile.heightCm || 165)
-  const age = Math.min(80, Math.max(16, profile.age || 30))
+  if (!hasNutritionData(profile)) return emptyTargets()
+
+  const configured = isProfileConfigured(profile)
+  const weight = configured ? profile.weightKg : 0
+  const height = configured ? profile.heightCm : 0
+  const age = configured ? profile.age : 0
   const factor = ACTIVITY_FACTORS[profile.activityLevel] ?? ACTIVITY_FACTORS.moderate
 
-  const bmr = 10 * weight + 6.25 * height - 5 * age - 161
-  const tdee = bmr * factor
+  const bmr = configured ? 10 * weight + 6.25 * height - 5 * age - 161 : 0
+  const tdee = configured ? bmr * factor : 0
   const phaseSplit = PHASE_META[phase ?? 'follicular'].macroSplit
   const phaseAdjustment = phase ? PHASE_META[phase].calorieAdjustment : 0
-  const goalAdjustment = GOAL_META[profile.goal]?.calorieAdjustment ?? 0
-  const recommendedTarget =
-    Math.round(Math.max(bmr * 1.1, tdee + phaseAdjustment + goalAdjustment) / 10) * 10
+  const goalAdjustment = configured ? (GOAL_META[profile.goal]?.calorieAdjustment ?? 0) : 0
+  const recommendedTarget = configured
+    ? Math.round(Math.max(bmr * 1.1, tdee + phaseAdjustment + goalAdjustment) / 10) * 10
+    : 0
   const customTarget = Math.round(Math.min(6000, Math.max(800, profile.customCalories || 0)))
   const target =
     profile.calorieMode === 'custom' && profile.customCalories > 0
       ? customTarget
       : recommendedTarget
+
+  if (target <= 0) return emptyTargets()
 
   const hasCustomMacros =
     profile.calorieMode === 'custom' &&
@@ -72,7 +93,9 @@ export function calculateTargets(profile: UserProfile, phase: Phase | null): Nut
     }
   }
 
-  const waterTarget = Math.round(Math.min(3200, Math.max(1800, weight * 30)) / 100) * 100
+  const waterTarget = configured
+    ? Math.round(Math.min(3200, Math.max(1800, weight * 30)) / 100) * 100
+    : 0
 
   return {
     bmr: Math.round(bmr),

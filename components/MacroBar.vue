@@ -22,13 +22,13 @@ const percent = computed(() =>
 
 <template>
   <div>
-    <div class="flex items-baseline justify-between gap-2 text-xs">
-      <span class="font-medium text-ink">{{ label }}</span>
-      <span class="text-ink-soft">
-        {{ Math.round(value) }}<span class="text-ink-faint"> / {{ Math.round(target) }}{{ unit }}</span>
+    <div class="flex items-baseline justify-between gap-2 text-[11px] sm:text-xs">
+      <span class="min-w-0 truncate font-medium text-ink">{{ label }}</span>
+      <span class="shrink-0 whitespace-nowrap text-ink-soft">
+        {{ Math.round(value) }}<span class="text-ink-soft"> / {{ Math.round(target) }}{{ unit }}</span>
       </span>
     </div>
-    <div class="mt-1.5 h-2 overflow-hidden rounded-full" :class="trackClass">
+    <div class="mt-1.5 h-2.5 overflow-hidden rounded-full sm:h-2" :class="trackClass">
       <div
         class="h-full rounded-full transition-all duration-700 ease-out"
         :class="barClass"

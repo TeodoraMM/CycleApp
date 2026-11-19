@@ -11,10 +11,10 @@ const meta = computed(() => PHASE_META[props.phase])
 
 <template>
   <span
-    class="inline-flex items-center gap-1.5 rounded-full font-semibold"
+    class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full font-semibold"
     :class="[
       meta.badgeClass,
-      size === 'sm' ? 'px-2.5 py-1 text-[10px] uppercase tracking-wider' : 'px-3 py-1.5 text-xs',
+      size === 'sm' ? 'px-2.5 py-1 text-[11px] uppercase tracking-wide sm:text-[10px] sm:tracking-wider' : 'px-3 py-1.5 text-xs',
     ]"
   >
     <span class="h-1.5 w-1.5 rounded-full" :class="meta.dotClass" />

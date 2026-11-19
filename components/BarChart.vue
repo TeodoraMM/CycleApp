@@ -44,13 +44,13 @@ function heightPercent(value: number): number {
         class="absolute inset-x-0 z-10 border-t border-dashed border-plum-300/70"
         :style="{ bottom: `${targetBottom}%` }"
       >
-        <span class="absolute -top-4 right-0 rounded-full bg-white/80 px-1.5 py-0.5 text-[9px] font-medium text-plum-400">
+        <span class="absolute -top-4 right-0 whitespace-nowrap rounded-full bg-white/90 px-1.5 py-0.5 text-[11px] font-medium text-plum-600">
           target
         </span>
       </div>
-      <div class="flex h-full items-end gap-1.5">
-        <div v-for="(point, index) in data" :key="`${point.label}-${index}`" class="flex h-full flex-1 flex-col justify-end">
-          <p v-if="showValues && point.value > 0" class="mb-1 text-center text-[9px] font-semibold text-ink-soft">
+      <div class="flex h-full items-end gap-1 sm:gap-1.5">
+        <div v-for="(point, index) in data" :key="`${point.label}-${index}`" class="flex h-full min-w-0 flex-1 flex-col justify-end">
+          <p v-if="showValues && point.value > 0" class="mb-1 text-center text-[11px] font-semibold text-ink-soft">
             {{ Math.round(point.value) }}
           </p>
           <div
@@ -62,11 +62,11 @@ function heightPercent(value: number): number {
         </div>
       </div>
     </div>
-    <div class="mt-2 flex gap-1.5">
+    <div class="mt-2 flex gap-1 sm:gap-1.5">
       <p
         v-for="(point, index) in data"
         :key="`label-${index}`"
-        class="flex-1 truncate text-center text-[9px] font-medium text-ink-faint"
+        class="min-w-0 flex-1 truncate text-center text-[11px] font-medium text-ink-soft"
       >
         {{ point.label }}
       </p>
