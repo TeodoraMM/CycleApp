@@ -82,24 +82,37 @@ const macroTiles = computed(() => [
       <p class="mt-1 text-sm text-ink-soft">Phase-aware guidance and gentle progress, all in one place.</p>
     </header>
 
-    <div class="mt-5 flex min-w-0 flex-col gap-2 rounded-full bg-white/70 p-1 shadow-sm sm:flex-row sm:gap-1">
+    <nav
+      class="mt-5 grid w-full grid-cols-2 gap-1 rounded-full border border-white/70 bg-white/60 p-1 shadow-sm backdrop-blur-sm"
+      aria-label="Insights view"
+    >
       <button
         type="button"
-        class="min-h-11 w-full min-w-0 rounded-full px-3 py-2.5 text-xs font-semibold transition sm:flex-1 sm:px-4"
-        :class="tab === 'recommendations' ? 'bg-white text-plum-600 shadow-sm' : 'text-ink-soft'"
+        :aria-pressed="tab === 'recommendations'"
+        class="min-h-11 rounded-full border border-transparent px-3 text-xs font-semibold transition duration-200 sm:px-4"
+        :class="
+          tab === 'recommendations'
+            ? 'border-lavender-200 bg-lavender-100/90 text-plum-700 shadow-sm'
+            : 'text-ink-soft hover:bg-white/60'
+        "
         @click="tab = 'recommendations'"
       >
         Recommendations
       </button>
       <button
         type="button"
-        class="min-h-11 w-full min-w-0 rounded-full px-3 py-2.5 text-xs font-semibold transition sm:flex-1 sm:px-4"
-        :class="tab === 'reports' ? 'bg-white text-plum-600 shadow-sm' : 'text-ink-soft'"
+        :aria-pressed="tab === 'reports'"
+        class="min-h-11 rounded-full border border-transparent px-3 text-xs font-semibold transition duration-200 sm:px-4"
+        :class="
+          tab === 'reports'
+            ? 'border-blush-200 bg-blush-100/90 text-blush-700 shadow-sm'
+            : 'text-ink-soft hover:bg-white/60'
+        "
         @click="tab = 'reports'"
       >
         Reports
       </button>
-    </div>
+    </nav>
 
     <template v-if="tab === 'recommendations'">
       <section
@@ -221,7 +234,8 @@ const macroTiles = computed(() => [
             v-for="phaseKey in PHASE_LIST"
             :key="phaseKey"
             type="button"
-            class="min-h-11 min-w-0 break-words rounded-[24px] border border-white/80 bg-white/75 p-4 text-left shadow-soft transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum-300"
+            class="min-h-11 min-w-0 break-words rounded-[24px] bg-white/75 p-4 text-left shadow-soft transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-plum-300"
+            :class="current.phase === phaseKey ? 'border-2 border-blush-400 ring-1 ring-blush-200' : 'border border-white/80'"
             :aria-label="`Explore ${PHASE_META[phaseKey].label} phase`"
             @click="openPhase(phaseKey)"
           >
@@ -249,24 +263,37 @@ const macroTiles = computed(() => [
     </template>
 
     <template v-else>
-      <div class="mt-4 flex min-w-0 flex-col gap-2 rounded-full bg-white/60 p-1 sm:flex-row sm:gap-1">
+      <nav
+        class="mt-4 grid w-full grid-cols-2 gap-1 rounded-full border border-white/70 bg-white/60 p-1 shadow-sm backdrop-blur-sm"
+        aria-label="Report range"
+      >
         <button
           type="button"
-          class="min-h-11 w-full min-w-0 rounded-full px-3 py-2 text-xs font-semibold transition sm:flex-1 sm:px-4"
-          :class="range === 7 ? 'bg-white text-plum-600 shadow-sm' : 'text-ink-soft'"
+          :aria-pressed="range === 7"
+          class="min-h-11 rounded-full border border-transparent px-3 text-xs font-semibold transition duration-200 sm:px-4"
+          :class="
+            range === 7
+              ? 'border-lavender-200 bg-lavender-100/90 text-plum-700 shadow-sm'
+              : 'text-ink-soft hover:bg-white/60'
+          "
           @click="setRange(7)"
         >
           This week
         </button>
         <button
           type="button"
-          class="min-h-11 w-full min-w-0 rounded-full px-3 py-2 text-xs font-semibold transition sm:flex-1 sm:px-4"
-          :class="range === 30 ? 'bg-white text-plum-600 shadow-sm' : 'text-ink-soft'"
+          :aria-pressed="range === 30"
+          class="min-h-11 rounded-full border border-transparent px-3 text-xs font-semibold transition duration-200 sm:px-4"
+          :class="
+            range === 30
+              ? 'border-blush-200 bg-blush-100/90 text-blush-700 shadow-sm'
+              : 'text-ink-soft hover:bg-white/60'
+          "
           @click="setRange(30)"
         >
           This month
         </button>
-      </div>
+      </nav>
 
       <section class="card mt-4 min-w-0">
         <div class="flex min-w-0 items-start gap-3">

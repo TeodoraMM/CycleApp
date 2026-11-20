@@ -78,35 +78,61 @@ function metaFor(key: string): DayMeta | undefined {
   return metaCache.value.get(key)
 }
 
-function dotClassFor(key: string): string {
-  const meta = metaFor(key)
-  if (!meta?.ready || meta.isLoggedPeriod || meta.isPredictedPeriod) return ''
-  return PHASE_META[meta.phase].dotClass
+const PHASE_DAY_CLASS: Record<Phase, string> = {
+  menstrual: 'bg-blush-100/90 text-blush-700',
+  follicular: 'bg-lavender-100/90 text-lavender-700',
+  ovulation: 'bg-peach-100/90 text-peach-600',
+  luteal: 'bg-plum-100/90 text-plum-700',
 }
 
 function dayClasses(key: string): string {
   const meta = metaFor(key)
+  const selected = props.selected === key
+  const isToday = key === today
+
+  if (selected) {
+    const classes = [
+      'z-10 border-2 border-blush-300 bg-plum-600 font-semibold text-white shadow-lift ring-2 ring-white/80 ring-offset-1 ring-offset-cream',
+    ]
+    if (isToday) classes.push('outline outline-2 outline-offset-2 outline-plum-500')
+    return classes.join(' ')
+  }
+
+  if (isToday) {
+    const classes = [
+      'relative z-[1] border-2 border-plum-500 bg-white font-semibold text-plum-700 shadow-soft hover:bg-plum-50/40',
+    ]
+    if (meta?.isLoggedPeriod) classes.push('ring-2 ring-inset ring-blush-400')
+    else if (meta?.isPredictedPeriod) classes.push('ring-2 ring-inset ring-dashed ring-blush-400')
+    else if (meta?.isOvulation) classes.push('ring-2 ring-inset ring-peach-400')
+    return classes.join(' ')
+  }
+
   const classes: string[] = []
 
-  if (meta?.isLoggedPeriod) classes.push('bg-blush-100 font-bold text-blush-700')
-  if (meta?.isPredictedPeriod) classes.push('bg-blush-50 text-blush-600 ring-1 ring-blush-200')
-  if (meta?.isFertile && !meta.isLoggedPeriod && !meta.isPredictedPeriod && props.selected !== key) {
-    classes.push('bg-plum-50/80')
-  }
-  if (!meta?.isLoggedPeriod && !meta?.isPredictedPeriod && props.selected !== key) {
-    classes.push('text-ink hover:bg-white/80')
+  if (meta?.ready) {
+    classes.push(PHASE_DAY_CLASS[meta.phase])
+  } else {
+    classes.push('bg-white/70 text-ink')
   }
 
-  if (props.selected === key) {
-    classes.push('bg-white text-ink shadow-soft ring-2 ring-plum-300')
-  } else if (meta?.isPeriodStart) {
-    classes.push('ring-2 ring-blush-400')
+  if (meta?.isFertile && !meta.isLoggedPeriod && !meta.isPredictedPeriod) {
+    classes.push('ring-1 ring-inset ring-peach-200')
+  }
+
+  if (meta?.isLoggedPeriod) {
+    classes.push('bg-blush-200 text-blush-800 font-semibold ring-1 ring-inset ring-blush-300')
+  } else if (meta?.isPredictedPeriod) {
+    classes.push('bg-blush-50 text-blush-700 ring-1 ring-inset ring-dashed ring-blush-400')
+  }
+
+  if (meta?.isPeriodStart) {
+    classes.push('ring-2 ring-inset ring-blush-500')
   } else if (meta?.isOvulation) {
-    classes.push('ring-2 ring-plum-300')
-  } else if (key === today) {
-    classes.push('ring-1 ring-blush-300')
+    classes.push('ring-2 ring-inset ring-peach-400')
   }
 
+  classes.push('hover:brightness-95')
   return classes.join(' ')
 }
 </script>
@@ -126,7 +152,7 @@ function dayClasses(key: string): string {
       </button>
     </div>
 
-    <div class="mt-4 grid grid-cols-7 gap-x-0 gap-y-1 text-center sm:gap-x-1">
+    <div class="mt-4 grid grid-cols-7 gap-1.5 text-center sm:gap-2">
       <span
         v-for="(day, index) in weekdays"
         :key="`${day}-${index}`"
@@ -139,39 +165,45 @@ function dayClasses(key: string): string {
         <button
           v-else
           type="button"
-          class="relative mx-auto flex h-11 w-full min-w-0 items-center justify-center rounded-xl text-xs font-semibold transition duration-200 sm:h-12 sm:rounded-2xl sm:text-sm"
+          class="relative mx-auto flex h-11 w-full min-w-0 items-center justify-center rounded-2xl text-xs font-semibold transition duration-200 sm:h-12 sm:text-sm"
           :class="dayClasses(cell.key)"
           :aria-label="`Select ${cell.key}`"
           :aria-pressed="selected === cell.key"
           @click="emit('select', cell.key)"
         >
           {{ cell.day }}
-          <span
-            v-if="dotClassFor(cell.key)"
-            class="absolute bottom-1 h-1 w-1 rounded-full sm:bottom-1.5"
-            :class="dotClassFor(cell.key)"
-          />
         </button>
       </template>
     </div>
 
-    <div class="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 sm:gap-x-3">
-      <span class="flex min-w-0 items-center gap-1.5 text-[11px] text-ink-soft sm:text-[11px]">
-        <span class="h-2.5 w-2.5 rounded-md bg-blush-100 ring-1 ring-blush-400" /> Logged period
+    <div class="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-[11px] text-ink-soft">
+      <span class="flex items-center gap-1.5">
+        <span class="h-3 w-3 rounded-md border-2 border-plum-500 bg-white" /> Today
       </span>
-      <span class="flex min-w-0 items-center gap-1.5 text-[11px] text-ink-soft sm:text-[11px]">
-        <span class="h-2.5 w-2.5 rounded-md bg-plum-50/80 ring-1 ring-plum-200" /> Fertile window
+      <span class="flex items-center gap-1.5">
+        <span class="h-3 w-3 rounded-md bg-blush-100/90 ring-1 ring-blush-300" /> Menstrual
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="h-3 w-3 rounded-md bg-lavender-100/90 ring-1 ring-lavender-300" /> Follicular
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="h-3 w-3 rounded-md bg-peach-100/90 ring-1 ring-peach-300" /> Ovulation
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="h-3 w-3 rounded-md bg-plum-100/90 ring-1 ring-plum-300" /> Luteal
+      </span>
+      <span class="flex items-center gap-1.5">
+        <span class="h-3 w-3 rounded-md bg-blush-200 ring-1 ring-blush-400" /> Logged period
       </span>
       <template v-if="predictionsOn">
-        <span class="flex min-w-0 items-center gap-1.5 text-[11px] text-ink-soft sm:text-[11px]">
-          <span class="h-2.5 w-2.5 rounded-md bg-blush-50 ring-1 ring-blush-200" /> Predicted period
+        <span class="flex items-center gap-1.5">
+          <span class="h-3 w-3 rounded-md bg-blush-50 ring-1 ring-dashed ring-blush-400" /> Predicted period
         </span>
-        <span class="flex min-w-0 items-center gap-1.5 text-[11px] text-ink-soft sm:text-[11px]">
-          <span class="h-2.5 w-2.5 rounded-md ring-2 ring-plum-300" /> Ovulation
+        <span class="flex items-center gap-1.5">
+          <span class="h-3 w-3 rounded-md bg-white ring-2 ring-peach-400" /> Ovulation day
         </span>
-        <span v-for="phase in PHASE_LIST" :key="phase" class="flex items-center gap-1.5 text-[11px] text-ink-soft">
-          <span class="h-1.5 w-1.5 rounded-full" :class="PHASE_META[phase].dotClass" />
-          {{ PHASE_META[phase].label }}
+        <span class="flex items-center gap-1.5">
+          <span class="h-3 w-3 rounded-md bg-white ring-1 ring-inset ring-peach-200" /> Fertile window
         </span>
       </template>
     </div>

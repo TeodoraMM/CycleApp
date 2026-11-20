@@ -29,7 +29,7 @@ const actionLabel = computed(() => {
 
 const actionClass = computed(() =>
   isStartDate.value
-    ? 'inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-blush-200 bg-white/80 px-5 py-3 text-sm font-semibold text-blush-600 shadow-sm transition hover:bg-white disabled:opacity-60'
+    ? 'inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-blush-200 bg-white/80 px-5 py-3 text-sm font-semibold text-blush-600 shadow-sm transition hover:bg-white disabled:opacity-60 sm:min-h-0'
     : 'btn-primary w-full',
 )
 
@@ -129,11 +129,11 @@ onBeforeUnmount(() => {
         >
           Predicted period
         </span>
-        <span v-if="phase.ready" class="chip">Cycle day {{ phase.cycleDay }}</span>
+        
         <span v-if="!predictionsOn" class="chip">Predictions off</span>
       </div>
 
-      <button type="button" class="min-h-11" :class="actionClass" :disabled="isFuture" @click="togglePeriodStart">
+      <button type="button" class="min-h-11 mt-2" :class="actionClass" :disabled="isFuture" @click="togglePeriodStart">
         <AppIcon :name="isStartDate ? 'x' : 'droplet'" :size="15" class="shrink-0" />
         {{ actionLabel }}
       </button>
